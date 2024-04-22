@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webcam Capture and OCR</title>
+    <script src='https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js'></script>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            font-family: 'Arial', sans-serif;
+        }
+        #video, #canvas, #photo {
+            border: 1px solid black;
+        }
+        button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+        textarea {
+            margin-top: 20px;
+            width: 320px;
+            height: 100px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Webcam Capture and OCR</h1>
+    <video id="video" width="320" height="240" autoplay></video>
+    <button id="captureBtn">Capture Image</button>
+    <canvas id="canvas" width="320" height="240" style="display: none;"></canvas>
+    <textarea id="textArea"></textarea>
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const captureBtn = document.getElementById('captureBtn');
+        const textArea = document.getElementById('textArea');
+
+
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => video.srcObject = stream)
+            .catch(err => console.error("Failed to get video stream:", err));
+
+        captureBtn.addEventListener('click', () => {
+            const context = canvas.getContext('2d');
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const imageDataUrl = canvas.toDataURL('image/png');
+
+            
+            Tesseract.recognize(
+                imageDataUrl,
+                'eng',
+                {
+                    logger: m => console.log(m) 
+                }
+            ).then(({ data: { text } }) => {
+                textArea.value = text; 
+            });
+        });
+    </script>
+</body>
+</html>
