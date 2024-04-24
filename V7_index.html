@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webcam Capture and OCR</title>
+    <script src='https://unpkg.com/tesseract.js@2.1.0/dist/tesseract.min.js'></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+        #video, #canvas, #photo {
+            border: 2px solid #333;
+            border-radius: 8px;
+            margin-top: 20px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        button {
+            margin-top: 20px;
+            padding: 12px 24px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        textarea {
+            margin-top: 20px;
+            width: 90%;
+            max-width: 320px;
+            height: 100px;
+            border-radius: 8px;
+            padding: 12px;
+            resize: none;
+        }
+        #userAgent {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Webcam Capture and OCR</h1>
+    <video id="video" width="320" height="240" autoplay playsinline></video>
+    <button id="captureBtn">Capture Image</button>
+    <button id="switchCameraBtn">Switch Camera</button>
+    <canvas id="canvas" width="320" height="240" style="display: none;"></canvas>
+    <textarea id="textArea" placeholder="Recognized text will appear here..." readonly></textarea>
+    <div id="userAgent"></div> <!-- Added User-Agent display -->
+
+    <script>
+        const userAgentDisplay = document.getElementById('userAgent');
+
+        const userAgent = navigator.userAgent;
+        const os = getOS(userAgent); // Extract operating system from User-Agent
+        userAgentDisplay.textContent = 'Operating System: ' + os;
+
+        function getOS(userAgent) {
+            let os = '';
+            if (userAgent.match(/Windows/i)) {
+                os = 'Windows';
+            } else if (userAgent.match(/Android/i)) {
+                os = 'Android';
+            } else if (userAgent.match(/Macintosh|Mac OS/i)) {
+                os = 'Mac OS';
+            } else if (userAgent.match(/iPhone|iPad|iPod/i)) {
+                os = 'iOS';
+            } else if (userAgent.match(/Linux/i)) {
+                os = 'Linux';
+            }
+            return os;
+        }
+
+        const switchCameraBtn = document.getElementById('switchCameraBtn');
+        const captureBtn = document.getElementById('captureBtn');
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const textArea = document.getElementById('textArea');
+        let currentStream;
+
+        function startVideo(stream) {
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => {
+                    track.stop();
+                });
+            }
+            currentStream = stream;
+            video.srcObject = stream;
+            video.onloadedmetadata = () => {
+                video.play();
+            };
+        }
+
+        function switchCamera() {
+            navigator.mediaDevices.enumerateDevices()
+                .then(devices => {
+                    const videoDevices = devices.filter(device => device.kind === 'videoinput');
+                    const currentDeviceId = currentStream.getTracks()[0].getSettings().deviceId;
+                    const nextDevice = videoDevices.find(device => device.deviceId !== currentDeviceId);
+                    if (nextDevice) {
+                        navigator.mediaDevices.getUserMedia({
+                            video: { deviceId: { exact: nextDevice.deviceId } }
+                        }).then(startVideo).catch(err => console.error("Failed to switch camera:", err));
+                    }
+                })
+                .catch(err => console.error("Failed to enumerate devices:", err));
+        }
+
+        function captureImage() {
+            const context = canvas.getContext('2d');
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const imageDataUrl = canvas.toDataURL('image/png');
+
+            // Simulate a scan effect with vibration and visual feedback
+            if ('vibrate' in navigator) {
+                navigator.vibrate([200]); // Vibrate for 200ms
+            }
+            canvas.style.backgroundColor = '#ffcc00'; // Change canvas background color temporarily
+
+            Tesseract.recognize(
+                imageDataUrl,
+                'eng',
+                {
+                    logger: m => console.log(m) 
+                }
+            ).then(({ data: { text } }) => {
+                textArea.value = text; 
+                canvas.style.backgroundColor = ''; // Reset canvas background color
+            });
+        }
+
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(startVideo)
+            .catch(err => console.error("Failed to get video stream:", err));
+
+        captureBtn.addEventListener('click', captureImage);
+
+        // Check if the device is iPhone or Samsung for camera switch functionality
+        if (os === 'iOS' || userAgent.includes('Samsung')) {
+            switchCameraBtn.addEventListener('click', switchCamera);
+        } else {
+            switchCameraBtn.style.display = 'none'; // Hide the switch camera button if not iPhone or Samsung
+        }
+    </script>
+</body>
+</html>
