@@ -57,18 +57,37 @@
     <button id="switchCameraBtn">Switch Camera</button>
     <canvas id="canvas" width="320" height="240" style="display: none;"></canvas>
     <textarea id="textArea" placeholder="Recognized text will appear here..." readonly></textarea>
-    <div id="userAgent"></div> 
+    <div id="userAgent"></div> <!-- Added User-Agent display -->
 
     <script>
+        const userAgentDisplay = document.getElementById('userAgent');
+
+        const userAgent = navigator.userAgent;
+        const os = getOS(userAgent); // Extract operating system from User-Agent
+        userAgentDisplay.textContent = 'Operating System: ' + os;
+
+        function getOS(userAgent) {
+            let os = '';
+            if (userAgent.match(/Windows/i)) {
+                os = 'Windows';
+            } else if (userAgent.match(/Android/i)) {
+                os = 'Android';
+            } else if (userAgent.match(/Macintosh|Mac OS/i)) {
+                os = 'Mac OS';
+            } else if (userAgent.match(/iPhone|iPad|iPod/i)) {
+                os = 'iOS';
+            } else if (userAgent.match(/Linux/i)) {
+                os = 'Linux';
+            }
+            return os;
+        }
+
+        const switchCameraBtn = document.getElementById('switchCameraBtn');
+        const captureBtn = document.getElementById('captureBtn');
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
-        const captureBtn = document.getElementById('captureBtn');
-        const switchCameraBtn = document.getElementById('switchCameraBtn');
         const textArea = document.getElementById('textArea');
-        const userAgentDisplay = document.getElementById('userAgent');
         let currentStream;
-
-        userAgentDisplay.textContent = 'User-Agent: ' + navigator.userAgent; 
 
         function startVideo(stream) {
             if (currentStream) {
@@ -97,6 +116,7 @@
                 })
                 .catch(err => console.error("Failed to enumerate devices:", err));
         }
+
         function captureImage() {
             const context = canvas.getContext('2d');
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
