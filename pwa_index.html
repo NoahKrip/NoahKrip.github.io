@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kamera anzeigen</title>
+</head>
+<body>
+
+<video id="videoElement" autoplay playsinline></video>
+<button id="switchButton">Kamera wechseln</button>
+
+<script>
+const videoElement = document.getElementById('videoElement');
+const switchButton = document.getElementById('switchButton');
+
+let frontCamera = false;
+
+switchButton.addEventListener('click', async () => {
+  frontCamera = !frontCamera;
+  await initializeCamera();
+});
+
+async function initializeCamera() {
+  const constraints = {
+    audio: false,
+    video: {
+      facingMode: frontCamera ? 'user' : 'environment'
+    }
+  };
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+    videoElement.srcObject = stream;
+  } catch (err) {
+    console.error('Error accessing camera:', err);
+  }
+}
+
+initializeCamera();
+</script>
+
+</body>
+</html>
