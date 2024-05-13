@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kamera anzeigen</title>
+</head>
+<body>
+
+<video id="videoElement" autoplay playsinline></video>
+<button id="switchButton">Kamera wechseln</button>
+
+<script>
+const videoElement = document.getElementById('videoElement');
+const switchButton = document.getElementById('switchButton');
+let currentStream;
+
+switchButton.addEventListener('click', async () => {
+  if (currentStream) {
+    currentStream.getTracks().forEach(track => track.stop());
+  }
+  const facingMode = videoElement.getAttribute('facing-mode') === 'user' ? 'environment' : 'user';
+  videoElement.setAttribute('facing-mode', facingMode);
+  await initializeCamera();
+});
+
+async function initializeCamera() {
+  const constraints = {
+    audio: false,
+    video: {
+      facingMode: videoElement.getAttribute('facing-mode')
+    }
+  };
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+    videoElement.srcObject = stream;
+    currentStream = stream;
+  } catch (err) {
+    console.error('Error accessing camera:', err);
+  }
+}
+
+initializeCamera();
+</script>
+
+</body>
+</html>
