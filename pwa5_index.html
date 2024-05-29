@@ -122,6 +122,18 @@
             <div class="tooltip-text">Standort suchen</div>
         </button>
     </div>
+
+    <div class="button-container">
+        <button id="zoomInBtn">
+            <img src="zoomin.png">
+            <div class="tooltip-text">Zoom In</div>
+        </button>
+        <button id="zoomOutBtn">
+            <img src="zoomout.png">
+            <div class="tooltip-text">Zoom Out</div>
+        </button>
+    </div>
+    
     <button id="switchButton"><img src="Switchcamera.png" style="height: 50px; width: 50px;"><div class="tooltip-text">Kamera wechseln</div></button>
     <canvas id="canvas" width="320" height="240" style="display: none;"></canvas>
     <textarea id="textArea" placeholder="Recognized text or barcode will appear here..." readonly></textarea>
@@ -392,6 +404,31 @@
 
         return new ImageData(output, width, height);
     }
+
+    // Zoom-Funktionalität
+    let zoomLevel = 1;
+
+    function setZoom(level) {
+    if (currentStream) {
+        const track = currentStream.getVideoTracks()[0];
+        const capabilities = track.getCapabilities();
+        if (capabilities.zoom) {
+            zoomLevel = Math.min(Math.max(level, capabilities.zoom.min), capabilities.zoom.max);
+            track.applyConstraints({ advanced: [{ zoom: zoomLevel }] });
+        } else {
+            console.log('Zoom wird von dieser Kamera nicht unterstützt.');
+        }
+    }
+}
+    // Setup Event Listeners für die Zoom-Buttons
+    document.getElementById('zoomInBtn').addEventListener('click', () => {
+        setZoom(zoomLevel + 0.1);
+    });
+
+    document.getElementById('zoomOutBtn').addEventListener('click', () => {
+        setZoom(zoomLevel - 0.1);
+    });
+
 </script>
 
 </html>
